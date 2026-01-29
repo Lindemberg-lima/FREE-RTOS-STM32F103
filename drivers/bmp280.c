@@ -2,7 +2,7 @@
  * @file    bmp280.c
  * @author  Lindemberg Roberto de Lima
  * @brief   BMP280 driver for STM32 using HAL I2C
- *
+ * Date: January 29, 2026 
  * @details
  * This driver is based on the official Bosch Sensortec BMP280 datasheet.
  *
@@ -223,4 +223,5 @@ HAL_StatusTypeDef BMP280_ReadTempPressure(BMP280_Handle_t *bmp,
 
     return HAL_OK;
 }
+
 
