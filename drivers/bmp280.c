@@ -27,10 +27,10 @@
 #include "bmp280.h"
 
 /* =========================================================
-   Funções internas de baixo nível (I2C)
+   Low-level internal functions (I2C)
    ========================================================= */
 
-/* Escreve 1 byte em um registrador */
+/* Writes 1 byte to a register */
 static HAL_StatusTypeDef BMP280_WriteReg(BMP280_Handle_t *bmp,
                                          uint8_t reg,
                                          uint8_t value)
@@ -46,13 +46,13 @@ static HAL_StatusTypeDef BMP280_WriteReg(BMP280_Handle_t *bmp,
                                    HAL_MAX_DELAY);
 }
 
-/* Lê N bytes a partir de um registrador */
+/* Reads N bytes from a register */
 static HAL_StatusTypeDef BMP280_ReadRegs(BMP280_Handle_t *bmp,
                                          uint8_t reg,
                                          uint8_t *data,
                                          uint16_t len)
 {
-    /* Envia o endereço do registrador */
+    /* Send the register's address */
     if (HAL_I2C_Master_Transmit(bmp->hi2c,
                                 BMP280_I2C_ADDR,
                                 &reg,
@@ -62,7 +62,7 @@ static HAL_StatusTypeDef BMP280_ReadRegs(BMP280_Handle_t *bmp,
         return HAL_ERROR;
     }
 
-    /* Lê os dados */
+    /* Read the data */
     return HAL_I2C_Master_Receive(bmp->hi2c,
                                   BMP280_I2C_ADDR,
                                   data,
@@ -71,13 +71,13 @@ static HAL_StatusTypeDef BMP280_ReadRegs(BMP280_Handle_t *bmp,
 }
 
 /* =========================================================
-   Leitura dos coeficientes de calibração
+   Reading the calibration coefficients
    ========================================================= */
 static HAL_StatusTypeDef BMP280_ReadCalibration(BMP280_Handle_t *bmp)
 {
     uint8_t buf[24];
 
-    /* Registros de calibração: 0x88 a 0xA1 */
+    /* Calibration records: 0x88 to 0xA1 */
     if (BMP280_ReadRegs(bmp, 0x88, buf, 24) != HAL_OK)
     {
         return HAL_ERROR;
@@ -101,38 +101,38 @@ static HAL_StatusTypeDef BMP280_ReadCalibration(BMP280_Handle_t *bmp)
 }
 
 /* =========================================================
-   Inicialização do BMP280
+   BMP280 initialization
    ========================================================= */
 HAL_StatusTypeDef BMP280_Init(BMP280_Handle_t *bmp)
 {
     uint8_t id;
 
-    /* Leitura do ID */
+    /* ID reading */
     if (BMP280_ReadRegs(bmp, BMP280_REG_ID, &id, 1) != HAL_OK)
         return HAL_ERROR;
 
-    if (id != 0x58)  /* ID do BMP280 */
+    if (id != 0x58)  /*  BMP280 ID */
         return HAL_ERROR;
 
-    /* Reset por software */
+    /* Software reset */
     if (BMP280_WriteReg(bmp, BMP280_REG_RESET, BMP280_RESET_VAL) != HAL_OK)
         return HAL_ERROR;
 
     HAL_Delay(100);
 
-    /* Leitura dos coeficientes */
+    /* Reading the coefficients */
     if (BMP280_ReadCalibration(bmp) != HAL_OK)
         return HAL_ERROR;
 
-    /* Configuração do filtro e standby */
+    /* Filter configuration and standby */
     uint8_t config = (0x00 << 5) |   // t_sb = 0.5 ms
-                     (0x04 << 2) |   // filtro IIR x16
-                     (0x00);         // SPI desabilitado
+                     (0x04 << 2) |   // IIR x16 filter
+                     (0x00);         // disable SPI
 
     if (BMP280_WriteReg(bmp, BMP280_REG_CONFIG, config) != HAL_OK)
         return HAL_ERROR;
 
-    /* Configuração: oversampling x1, modo normal */
+    /* Configuration: oversampling x1, normal mode */
     uint8_t ctrl_meas =
         BMP280_OSRS_T_x1 |
         BMP280_OSRS_P_x1 |
@@ -145,7 +145,7 @@ HAL_StatusTypeDef BMP280_Init(BMP280_Handle_t *bmp)
 }
 
 /* =========================================================
-   Algoritmos de compensação (datasheet Bosch)
+   Compensation algorithms (Bosch datasheet)
    ========================================================= */
 static int32_t BMP280_CompensateTemp(BMP280_Handle_t *bmp, int32_t adc_T)
 {
@@ -194,7 +194,7 @@ static uint32_t BMP280_CompensatePressure(BMP280_Handle_t *bmp, int32_t adc_P)
 }
 
 /* =========================================================
-   Leitura de temperatura e pressão
+   Temperature and pressure reading
    ========================================================= */
 HAL_StatusTypeDef BMP280_ReadTempPressure(BMP280_Handle_t *bmp,
                                           float *temperature,
@@ -223,3 +223,4 @@ HAL_StatusTypeDef BMP280_ReadTempPressure(BMP280_Handle_t *bmp,
 
     return HAL_OK;
 }
+
